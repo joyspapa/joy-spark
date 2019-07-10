@@ -6,7 +6,7 @@ import org.junit.Test;
 import com.joy.spark.streaming.properties.AutoOffsetResetType;
 import com.joy.spark.streaming.properties.KafkaStreamApplProperty;
 
-public class KafkaStreamApplToStoreOffsetOnZkTest {
+public class KafkaStreamApplTest {
 
 	@Test
 	public void test() throws Exception {
@@ -32,7 +32,7 @@ public class KafkaStreamApplToStoreOffsetOnZkTest {
 		prop.setSchemaId("/logplanet/DE1532051288/ENT2577");
 		prop.setZkHosts("192.168.10.82:2181,192.168.10.83:2181,192.168.10.84:2181");
 		prop.setHdfsUrl("hdfs://obz-hadoop-ha/user/ecube");
-		
-		new KafkaStreamApplToStoreOffsetOnZk().start(prop);
+
+		new KafkaStreamAppl().start(prop);
 	}
 }

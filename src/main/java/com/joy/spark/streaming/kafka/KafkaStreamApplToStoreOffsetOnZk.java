@@ -1,12 +1,10 @@
 package com.joy.spark.streaming.kafka;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.I0Itec.zkclient.ZkClient;
@@ -14,7 +12,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.api.java.JavaInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -25,6 +22,9 @@ import org.apache.spark.streaming.kafka010.KafkaUtils;
 import org.apache.spark.streaming.kafka010.LocationStrategies;
 import org.apache.spark.streaming.kafka010.OffsetRange;
 
+import com.joy.spark.streaming.properties.KafkaProperty;
+import com.joy.spark.streaming.properties.KafkaStreamApplProperty;
+
 /**
  * 
 * @author joy
@@ -34,38 +34,31 @@ public class KafkaStreamApplToStoreOffsetOnZk extends AbstractKafkaStreamAppl {
 
 	// for log4j
 	//private transient final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(this.getClass());
-
 	private /*transient*/static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(KafkaStreamApplToStoreOffsetOnZk.class);
 
-	public static void main(String[] args) throws Exception {
-		new KafkaStreamApplToStoreOffsetOnZk().start("TEST-COMMIT", "/logplanet/DE1532051288/ENT2577",
-				"192.168.10.82:9092,192.168.10.83:9092,192.168.10.84:9092",
-				"192.168.10.82:2181,192.168.10.83:2181,192.168.10.84:2181", "hdfs://obz-hadoop-ha/user/ecube", "local");
-	}
-
-	public void start(String appName, String schemaId, String brokers, String zkHosts, String hdfsUrl,
-			String deployMode) throws Exception {
-		logger.info("▶ appName:" + appName + "schemaId:" + schemaId + ", hdfsUrl:" + hdfsUrl + ", brokers:" + brokers
-				+ ", zkHosts:" + zkHosts + ", deployMode [optional]:" + deployMode);
+	public void start(KafkaStreamApplProperty prop) throws Exception {
+		logger.info("▶ appName:" + prop.getSparkProp().getSparkAppName() + ", schemaId:" + prop.getSchemaId()
+		+ ", hdfsUrl:" + prop.getHdfsUrl() + ", brokers:" + prop.getKafkaProp().getBrokers() + ", zkHosts:"
+		+ prop.getZkHosts());
 
 		// for local testing
-		JavaSparkContext jsc = getJavaSparkContext(appName, deployMode);
+		JavaSparkContext jsc = getJavaSparkContext(prop.getSparkProp());
 
 		// get SparkContext
-		JavaStreamingContext jssc = new JavaStreamingContext(jsc, batchInterval);
+		JavaStreamingContext jssc = new JavaStreamingContext(jsc, prop.getSparkProp().getBatchIntervalMilis());
 
 		// get Kafka configuration
-		Map<String, Object> kafkaParams = getKafkaParams(brokers, StringDeserializer.class, StringDeserializer.class);
+		Map<String, Object> kafkaParams = getKafkaParams(prop.getKafkaProp(), prop.getSparkProp());
 
 		// create Kafka
 		//final KafkaConsumer kafkaConsumer = new KafkaConsumer<>(kafkaParams);
 
 		// https://github.com/Jiwei0/javalearning/blob/master/src/main/java/com/me/demo/spark/UserClickCountAnalytics.java
 		// create zkClient
-		ZkClient zkClient = new ZkClient(zkHosts);
-		List<String> topicList = Arrays.asList(strTopics.split(","));
+		ZkClient zkClient = new ZkClient(prop.getZkHosts());
+		List<String> topicList = Arrays.asList(prop.getKafkaProp().getTopics().split(","));
 		Map<TopicPartition, Long> fromOffsets = new HashMap<>();
-		String zkGroupIdPath = "/logplanet/offset/" + groupId + "/";
+		String zkGroupIdPath = "/logplanet/offset/" + prop.getKafkaProp().getGroupId() + "/";
 
 		for (String topic : topicList) {
 			String zkTopicPath = zkGroupIdPath + topic;
@@ -84,7 +77,7 @@ public class KafkaStreamApplToStoreOffsetOnZk extends AbstractKafkaStreamAppl {
 			}
 		}
 
-		JavaInputDStream<ConsumerRecord<String, String>> kafkaStream = getKafkaDStream(jssc, fromOffsets, kafkaParams);
+		JavaInputDStream<ConsumerRecord<String, String>> kafkaStream = getKafkaDStream(jssc, fromOffsets, kafkaParams, prop.getKafkaProp());
 
 		kafkaStream.foreachRDD(kafkaStreamRDD -> {
 			if (logger.isDebugEnabled()) {
@@ -136,21 +129,21 @@ public class KafkaStreamApplToStoreOffsetOnZk extends AbstractKafkaStreamAppl {
 	}
 
 	protected JavaInputDStream<ConsumerRecord<String, String>> getKafkaDStream(JavaStreamingContext jssc,
-			Map<TopicPartition, Long> fromOffsets, Map<String, Object> kafkaParams) {
+			Map<TopicPartition, Long> fromOffsets, Map<String, Object> kafkaParams, KafkaProperty kafkaProp) {
 		JavaInputDStream<ConsumerRecord<String, String>> kafkaStream = null;
 
 		if (fromOffsets.isEmpty()) {
 			kafkaStream = KafkaUtils.createDirectStream(jssc, //streaming context
 					LocationStrategies.PreferConsistent(), ConsumerStrategies.<String, String> Subscribe(
-							new HashSet<>(Arrays.asList(strTopics.split(","))), kafkaParams));
+							new HashSet<>(Arrays.asList(kafkaProp.getTopics().split(","))), kafkaParams));
 
-			logger.info("▶ Create kafka direct stream... topic : " + strTopics);
+			logger.info("▶ Create kafka direct stream... topic : " + kafkaProp.getTopics());
 		} else {
 			kafkaStream = KafkaUtils.createDirectStream(jssc, //streaming context
 					LocationStrategies.PreferConsistent(), ConsumerStrategies.<String, String> Subscribe(
-							new HashSet<>(Arrays.asList(strTopics.split(","))), kafkaParams, fromOffsets));
+							new HashSet<>(Arrays.asList(kafkaProp.getTopics().split(","))), kafkaParams, fromOffsets));
 
-			logger.info("▶ Create kafka direct stream... with fromOffsets topic : " + strTopics);
+			logger.info("▶ Create kafka direct stream... with fromOffsets topic : " + kafkaProp.getTopics());
 		}
 
 		return kafkaStream;

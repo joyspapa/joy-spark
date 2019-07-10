@@ -33,6 +33,9 @@ allprojects {
         //=========================================
 	    compile "ch.qos.logback:logback-classic:$logbackVersion"
 	
+	    //jopt
+		compile "net.sf.jopt-simple:jopt-simple:4.9"
+		
 	    //=========================================
         // JUnit
         //=========================================
