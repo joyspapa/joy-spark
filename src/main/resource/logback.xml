@@ -41,27 +41,28 @@
  	
   <logger name="io.vertx" level="error" additivity="false">
     <appender-ref ref="console" />
-    <appender-ref ref="rollingFile" />
   </logger>
 
  	<logger name="io.netty" level="error" additivity="false">
     <appender-ref ref="console" />
-    <appender-ref ref="rollingFile" />
   </logger>
 
   <logger name="ch.qos.logback" level="error" additivity="false">
     <appender-ref ref="console" />
-    <appender-ref ref="rollingFile" />
   </logger>
 
-  <logger name="com.obzen" level="debug" additivity="false">
+  <logger name="org.apache.spark.streaming.kafka010" level="trace" additivity="false">
     <appender-ref ref="console" />
-    <appender-ref ref="rollingFile" />
+    <!-- <appender-ref ref="rollingFile" />-->
+  </logger>
+  
+  <logger name="com.joy" level="debug" additivity="false">
+    <appender-ref ref="console" />
+    <!-- <appender-ref ref="rollingFile" />-->
   </logger>
 
   <root level="warn">
     <appender-ref ref="console" />
-    <appender-ref ref="rollingFile" />
   </root>
 
 </configuration>

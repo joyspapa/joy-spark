@@ -22,8 +22,12 @@ allprojects {
         //=========================================
         // Spark
         //=========================================
-        compile "org.apache.spark:spark-yarn_$sparkScalaVersion:$sparkVersion" //yarn
-	
+        compile "org.apache.spark:spark-yarn_$sparkScalaVersion:$sparkVersion"
+		compile "org.apache.spark:spark-core_$sparkScalaVersion:$sparkVersion"
+		compile "org.apache.spark:spark-streaming_$sparkScalaVersion:$sparkVersion"
+		compile "org.apache.spark:spark-sql_$sparkScalaVersion:$sparkVersion"
+        compile "org.apache.spark:spark-streaming-kafka-0-10_$sparkScalaVersion:$sparkVersion"
+        
 	    //=========================================
         // logback
         //=========================================
