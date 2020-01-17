@@ -27,6 +27,7 @@ allprojects {
 		compile "org.apache.spark:spark-streaming_$sparkScalaVersion:$sparkVersion"
 		compile "org.apache.spark:spark-sql_$sparkScalaVersion:$sparkVersion"
         compile "org.apache.spark:spark-streaming-kafka-0-10_$sparkScalaVersion:$sparkVersion"
+        //compile "org.apache.spark:spark-streaming-kafka-0-10_2.11:2.4.0"
         
 	    //=========================================
         // logback
