@@ -1,0 +1,411 @@
+//방문상세 (일별, 방문별 집계)(VisitDetail)
+val visit = spark.read.parquet("/user/ecube/log-planet/batch/out/VisitDetail/dt=2018-08-22")
+val cvd = spark.read.parquet("/user/ecube/log-planet/batch/out/CustVisitDaily/dt=2018-08-22")
+
+visit.filter($"cust_id" === "C00000326").show
++---+-------+------------+----------+--------------------+----------+---------+-----------+--------------------+-----------------+---------------------+--------------------+-------------------+----------------+-------------+------------+---------+--------+------------+-----+---------------+---------------+---+--------------------+-----------------+---------+--------------------+
+|age| amount|app_web_type|   base_dt|           cookie_id|cust_grade|  cust_id|device_type|        end_page_uri|         end_time|inbound_chnl_campaign|inbound_chnl_keyword|inbound_chnl_medium|inbound_chnl_src|      ip_addr|new_visit_yn|order_cnt|page_cnt|pageview_cnt|place|regist_visit_yn|     session_id|sex|      start_page_uri|       start_time|stayTime|                uuid|
++---+-------+------------+----------+--------------------+----------+---------+-----------+--------------------+-----------------+---------------------+--------------------+-------------------+----------------+-------------+------------+---------+--------+------------+-----+---------------+---------------+---+--------------------+-----------------+---------+--------------------+
+| 04|      0|         web|2018-08-22|29035ntpb4pe7m071lrd|         A|C00000326|     tablet|http://192.168.10...|20180822180800016|                     |             earring|                  1|               1|160.21.187.42|           N|        0|      44|          80|   대전|              N|w4xepr77co5xuxz|   |http://192.168.10...|20180822173200031|  7599985|04eba50e-bbc1-43f...|
+| 04|2960000|         app|2018-08-22|29035ntpb4pe7m071lrd|         A|C00000326|     mobile|http://192.168.10...|20180822183000048|                     |      organic search|                  4|               1|160.21.187.42|           N|        1|      43|          90|   대전|              N|7786u9h7lqg898c|   |http://192.168.10...|20180822180000047|  3000001|04eba50e-bbc1-43f...|
+| 04|      0|         app|2018-08-22|29035ntpb4pe7m071lrd|         A|C00000326|     tablet|http://192.168.10...|20180822173500015|                    4|                    |                  2|               2|160.21.187.42|           N|        0|      29|         122|   대전|              N|551g168bqx99t86|   |http://192.168.10...|20180822164800044|  8699971|04eba50e-bbc1-43f...|
+| 04|      0|         app|2018-08-22|29035ntpb4pe7m071lrd|         A|C00000326|     mobile|http://192.168.10...|20180822173900018|                     |                back|                  4|               3|160.21.187.42|           N|        0|      29|         111|   대전|              N|63ih3s88b3z60v6|   |http://192.168.10...|20180822164600009|  9300009|04eba50e-bbc1-43f...|
+| 04|      0|         app|2018-08-22|29035ntpb4pe7m071lrd|         A|C00000326|     tablet|http://192.168.10...|20180822183300059|                    2|                    |                  2|               1|160.21.187.42|           N|        0|      48|          91|   대전|              N|1dm5wj68pw7o9yk|   |http://192.168.10...|20180822175800058|  7500001|04eba50e-bbc1-43f...|
+| 04|4055000|         web|2018-08-22|29035ntpb4pe7m071lrd|         A|C00000326|     tablet|http://192.168.10...|20180822183500037|                    4|                    |                  2|               2|160.21.187.42|           N|        1|      46|          92|   대전|              N|1r0357z9pr90p69|   |http://192.168.10...|20180822180100028|  3400009|04eba50e-bbc1-43f...|
++---+-------+------------+----------+--------------------+----------+---------+-----------+--------------------+-----------------+---------------------+--------------------+-------------------+----------------+-------------+------------+---------+--------+------------+-----+---------------+---------------+---+--------------------+-----------------+---------+--------------------+
+
+
+cvd.filter($"cust_id"=== "C00000326").show
++---+------+----------+----------+--------------------+----------+---------+---------------+--------+------------+-----+---+---------+---------+
+|age|amount|   base_dt|bounce_cnt|           cookie_id|cust_grade|  cust_id|order_visit_cnt|page_cnt|pageview_cnt|place|sex|stayTime|visit_cnt|
++---+------+----------+----------+--------------------+----------+---------+---------------+--------+------------+-----+---+---------+---------+
+| 04|     0|2018-08-22|         0|29035ntpb4pe7m071lrd|         A|C00000326|              2|     239|         586|   대전|   | 39499976|        6|
++---+------+----------+----------+--------------------+----------+---------+---------------+--------+------------+-----+---+---------+---------+
+
+
+
+//고객속성별방문요약(일별, 주별, 월별)(CustVisitSummaryDaily)
+val visit = spark.read.parquet("/user/ecube/log-planet/batch/out/VisitDetail/dt=2018-08-22")
+val cvs = spark.read.parquet("/user/ecube/log-planet/batch/out/CustVisitSummaryDaily/dt=2018-08-22")
+
+visit.groupBy("sex", "age", "place", "cust_grade").count.count
+res827: Long = 165
+cvs.count
+res828: Long = 165
+
+visit.filter(($"age" === "03") && ($"place" === "서울") && ($"cust_grade" === "C")).select("age", "place", "cust_grade", "session_id", "new_visit_yn","order_cnt", "page_cnt", "pageview_cnt").show
++---+-----+----------+---------------+------------+---------+--------+------------+
+|age|place|cust_grade|     session_id|new_visit_yn|order_cnt|page_cnt|pageview_cnt|
++---+-----+----------+---------------+------------+---------+--------+------------+
+| 03|   서울|         C|8cs9ua6ge8rlun4|           N|        1|      23|          85|
+| 03|   서울|         C|u3he9a93hzc4112|           N|        1|      46|          83|
+| 03|   서울|         C|67x6qwe6c633tfn|           N|        0|      13|          76|
+| 03|   서울|         C|g139j196789ax23|           Y|        0|      57|         102|
+| 03|   서울|         C|c822dd5r807845d|           N|        0|      21|          86|
+| 03|   서울|         C|h81odcx437wix3z|           N|        0|      46|          86|
+| 03|   서울|         C|o8h0529niw6q572|           N|        0|      42|          82|
+| 03|   서울|         C|u7l54no0139me04|           Y|        0|      25|         102|
+| 03|   서울|         C|7720wz0r7xnw1o2|           N|        1|      30|          82|
+| 03|   서울|         C|xtl416z67l59tb2|           N|        0|      18|         118|
+| 03|   서울|         C|5ovg34uj37vlitr|           N|        0|      48|          73|
+| 03|   서울|         C|fr39u1j91hj0425|           Y|        0|      21|         102|
+| 03|   서울|         C|07txa98c92j3k07|           Y|        0|      59|         102|
+| 03|   서울|         C|m2816117tstyyep|           N|        1|      16|          72|
+| 03|   서울|         C|2788jve1fi93cq9|           Y|        0|      53|         102|
+| 03|   서울|         C|27i1do8ubx3zf4m|           Y|        0|      37|         102|
+| 03|   서울|         C|w2168wh5ok5vk1d|           N|        0|      18|          48|
++---+-----+----------+---------------+------------+---------+--------+------------+
+
+cvs.filter(($"age" === "03") && ($"place" === "서울") && ($"cust_grade" === "C")).show
++---+--------+----------+----------+--------+----------+---------------+---------------+--------+------------+-----+---+---------+---------+-----------+
+|age|  amount|   base_dt|bounce_cnt|cust_cnt|cust_grade|new_visitor_cnt|order_visit_cnt|page_cnt|pageview_cnt|place|sex|stayTime|visit_cnt|visitor_cnt|
++---+--------+----------+----------+--------+----------+---------------+---------------+--------+------------+-----+---+---------+---------+-----------+
+| 03|11430000|2018-08-22|         0|       0|         C|              6|              4|     573|        1503|   서울|   |123500271|       17|          1|
++---+--------+----------+----------+--------+----------+---------------+---------------+--------+------------+-----+---+---------+---------+-----------+
+
+
+//유입채널별방문요약(일별, 주별, 월별)(InChnlVisitSummaryDaily)
+val visit = spark.read.parquet("/user/ecube/log-planet/batch/out/VisitDetail/dt=2018-08-22")
+val icvs = spark.read.parquet("/user/ecube/log-planet/batch/out/InChnlVisitSummaryDaily/dt=2018-08-22")
+
+visit.groupBy("inbound_chnl_campaign","inbound_chnl_keyword","inbound_chnl_medium","inbound_chnl_src").count.count
+res917: Long = 124
+icvs.count
+res918: Long = 124
+
+icvs.filter(($"inbound_chnl_src"==="1")&&($"inbound_chnl_medium"==="1")&&($"inbound_chnl_keyword"==="hat")).select("inbound_chnl_src","inbound_chnl_medium","inbound_chnl_campaign","inbound_chnl_keyword","visit_cnt","visitor_cnt","cust_cnt","new_visitor_cnt","order_visit_cnt","page_cnt","pageview_cnt","bounce_cnt","stayTime").show
++----------------+-------------------+---------------------+--------------------+---------+-----------+--------+---------------+---------------+--------+------------+----------+---------+
+|inbound_chnl_src|inbound_chnl_medium|inbound_chnl_campaign|inbound_chnl_keyword|visit_cnt|visitor_cnt|cust_cnt|new_visitor_cnt|order_visit_cnt|page_cnt|pageview_cnt|bounce_cnt|stayTime|
++----------------+-------------------+---------------------+--------------------+---------+-----------+--------+---------------+---------------+--------+------------+----------+---------+
+|               1|                  1|                     |                 hat|      180|        147|       3|              2|              0|     369|         652|       175| 42699907|
++----------------+-------------------+---------------------+--------------------+---------+-----------+--------+---------------+---------------+--------+------------+----------+---------+
+
+// visit_cnt
+visit.filter(($"inbound_chnl_medium"==="1")&&($"inbound_chnl_src"==="1")&&($"inbound_chnl_keyword"==="hat")).count
+res1191: Long = 180
+
+// visitor_cnt, cust_cnt
+visit.filter(($"inbound_chnl_medium"==="1")&&($"inbound_chnl_src"==="1")&&($"inbound_chnl_keyword"==="hat")).filter($"cust_id"==="").groupBy("cookie_id").count.count
+res1204: Long = 144
+visit.filter(($"inbound_chnl_medium"==="1")&&($"inbound_chnl_src"==="1")&&($"inbound_chnl_keyword"==="hat")).filter(not($"cust_id"==="")).count
+res1220: Long = 3
+
+// new_visitor_cnt
+visit.filter(($"inbound_chnl_medium"==="1")&&($"inbound_chnl_src"==="1")&&($"inbound_chnl_keyword"==="hat")).filter($"new_visit_yn"==="Y").count
+res1250: Long = 2
+
+
+//고객별검색어별집계(일별)(CustSearchwordDaily)
+val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22")
+val csw = spark.read.parquet("/user/ecube/log-planet/batch/out/CustSearchwordDaily/dt=2018-08-22")
+
+// record count
+base.filter(not($"searchword"==="")).groupBy("custId", "cookieId", "searchword").count.count
+csw.count
+res1262: Long = 2311
+res1263: Long = 2311
+
+// search count (sample)
+base.filter(not($"searchword"==="")).filter(($"custId"==="C00000185")&&($"cookieId"==="93e95488t2x3t97hjki9")&&($"searchword"==="loafer")).select("custId", "cookieId", "searchword", "searchResultType").show
++---------+--------------------+----------+----------------+
+|   custId|            cookieId|searchword|searchResultType|
++---------+--------------------+----------+----------------+
+|C00000185|93e95488t2x3t97hjki9|    loafer|               7|
+|C00000185|93e95488t2x3t97hjki9|    loafer|               7|
+|C00000185|93e95488t2x3t97hjki9|    loafer|               7|
+|C00000185|93e95488t2x3t97hjki9|    loafer|               7|
+|C00000185|93e95488t2x3t97hjki9|    loafer|               7|
+|C00000185|93e95488t2x3t97hjki9|    loafer|               7|
++---------+--------------------+----------+----------------+
+csw.filter(($"cust_id"==="C00000185")&&($"cookie_id"==="93e95488t2x3t97hjki9")&&($"searchword"==="loafer")).show
++----------+--------------------+---------+----------+---------------+----------+
+|   base_dt|           cookie_id|  cust_id|search_cnt|search_fail_cnt|searchword|
++----------+--------------------+---------+----------+---------------+----------+
+|2018-08-22|93e95488t2x3t97hjki9|C00000185|         6|              0|    loafer|
++----------+--------------------+---------+----------+---------------+----------+
+
+
+//검색어별요약(일별)(SearchwordSummaryDaily)
+val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22").filter(not($"searchword"===""))
+val sws = spark.read.parquet("/user/ecube/log-planet/batch/out/SearchwordSummaryDaily/dt=2018-08-22")
+
+//count
+base.groupBy("searchword").count.count
+sws.count
+res1460: Long = 34
+res1461: Long = 34
+
+// top search count
+base.groupBy("searchword").count.sort(desc("count")).show(5)
++--------------+-----+
+|    searchword|count|
++--------------+-----+
+|organic search|  201|
+|      computer|  186|
+|         naver|  158|
+|          aaaa|  153|
+|        google|  151|
++--------------+-----+
+sws.sort(desc("search_cnt")).show(5)
++----------+----------+---------------+--------------+
+|   base_dt|search_cnt|search_fail_cnt|    searchword|
++----------+----------+---------------+--------------+
+|2018-08-22|       201|            201|organic search|
+|2018-08-22|       186|            186|      computer|
+|2018-08-22|       158|            158|         naver|
+|2018-08-22|       153|            153|          aaaa|
+|2018-08-22|       151|            151|        google|
++----------+----------+---------------+--------------+
+
+
+
+//시나리오경로별방문목록(일별)(ScenarioPathVisit)
+val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22")
+val spv = spark.read.parquet("/user/ecube/log-planet/batch/out/ScenarioPathVisit/dt=2018-08-22")
+
+// record count
+val pv = List("03","11","12","13","14")
+base.filter($"pvType".isin(pv :_*)).groupBy("sessionId", "pvType").count.count
+spv.count
+res1597: Long = 7096
+res1598: Long = 7096
+
+
+//유입채널별시나리오경로별방문요약(일별)(InChnlScenarioPathSummary)
+//val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22")
+val spv = spark.read.parquet("/user/ecube/log-planet/batch/out/ScenarioPathVisit/dt=2018-08-22")
+val icp = spark.read.parquet("/user/ecube/log-planet/batch/out/InChnlScenarioPathSummaryDaily/dt=2018-08-22")
+
+// record count
+spv.groupBy("pv_type","inbound_chnl_src","inbound_chnl_medium","inbound_chnl_campaign").count.count
+icp.count
+res1894: Long = 85
+res1895: Long = 85
+
+// sampling
+icp.filter(($"pv_type"==="03")&&($"inbound_chnl_src"==="1")&&($"inbound_chnl_medium"==="2")&&($"inbound_chnl_campaign"==="2")).show
++----------+---------------------+-------------------+----------------+-------+-----------+-----------------+---------+
+|   base_dt|inbound_chnl_campaign|inbound_chnl_medium|inbound_chnl_src|pv_type|scenario_nm|scenario_page_seq|visit_cnt|
++----------+---------------------+-------------------+----------------+-------+-----------+-----------------+---------+
+|2018-08-22|                    2|                  2|               1|     03|     상품구매|                1|      308|
++----------+---------------------+-------------------+----------------+-------+-----------+-----------------+---------+
+spv.filter(($"pv_type"==="03")&&($"inbound_chnl_src"==="1")&&($"inbound_chnl_medium"==="2")&&($"inbound_chnl_campaign"==="2")).count
+res1983: Long = 308
+
+
+//컨텐츠별방문요약 (일별, 주별, 월별)(ContentVisitSummary)
+val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22")
+val cvs = spark.read.parquet("/user/ecube/log-planet/batch/out/ContentVisitSummary/dt=2018-08-22")
+
+// record count
+base.groupBy("currPageUri","productCd","productCatgL","productCatgM","productCatgS").count.count
+cvs.count
+res2066: Long = 297
+res2067: Long = 297
+
+// sampling (page_uri = http://192.168.10.231/magento/men/pants-denim/the-essential-boot-cut-jean-519.html)
+cvs.filter($"page_uri"==="http://192.168.10.231/magento/men/pants-denim/the-essential-boot-cut-jean-519.html").select("visit_cnt","visitor_cnt","pageview_cnt","bounce_cnt").show
++---------+-----------+------------+----------+
+|visit_cnt|visitor_cnt|pageview_cnt|bounce_cnt|
++---------+-----------+------------+----------+
+|      430|        320|         500|        10|
++---------+-----------+------------+----------+
+// visit_cnt
+base.filter($"currPageUri"==="http://192.168.10.231/magento/men/pants-denim/the-essential-boot-cut-jean-519.html").groupBy("sessionId").count.count
+res3364: Long = 430
+// visitor_cnt
+base.filter($"currPageUri"==="http://192.168.10.231/magento/men/pants-denim/the-essential-boot-cut-jean-519.html").withColumn("customerKey", concat($"custId",$"cookieId")).groupBy("customerKey").count.count
+res3416: Long = 320
+
+// pageview_cnt
+base.filter($"currPageUri"==="http://192.168.10.231/magento/men/pants-denim/the-essential-boot-cut-jean-519.html").count
+res3311: Long = 500
+
+//고객별상품별방문집계(일별)(CustProductDaily)
+val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22")
+val cpd = spark.read.parquet("/user/ecube/log-planet/batch/out/CustProductDaily/dt=2018-08-22")
+
+// record count
+base.groupBy("custId","cookieId","productCd","productCatgL","productCatgM","productCatgS").count.count
+cpd.count
+res2077: Long = 76100
+res2078: Long = 76100
+
+// prod_detail_pageview_cnt (sampling)
+base.filter(($"cookieId"==="442dyx9f74iq3g0s25gx")&&($"productCd"==="")).count
+res2198: Long = 450
+cpd.filter(($"cookie_id"==="442dyx9f74iq3g0s25gx")&&($"product_cd"==="")).select("cookie_id","prod_detail_pageview_cnt").show
++--------------------+------------------------+
+|           cookie_id|prod_detail_pageview_cnt|
++--------------------+------------------------+
+|442dyx9f74iq3g0s25gx|                     450|
++--------------------+------------------------+
+
+// basket_click_cnt (sampling)
+base.filter($"eventTypeCd"==="31").count
+res2754: Long = 2693
+cpd.filter($"basket_click_cnt" > 0).groupBy($"basket_click_cnt").count.show
++----------------+-----+
+|basket_click_cnt|count|
++----------------+-----+
+|               1| 2107|
+|               3|   43|
+|               5|    5|
+|               4|    6|
+|               2|  204|
++----------------+-----+
+cpd.filter($"basket_click_cnt" > 0).groupBy($"basket_click_cnt").count.withColumn("sum", $"basket_click_cnt" * $"count").agg(sum("sum")).show
++--------+
+|sum(sum)|
++--------+
+|    2693|
++--------+
+
+//zzim_click_cnt
+base.filter($"eventTypeCd"==="32").count
+cpd.filter($"zzim_click_cnt" > 0).groupBy($"zzim_click_cnt").count.show
+cpd.filter($"zzim_click_cnt" > 0).groupBy($"zzim_click_cnt").count.withColumn("sum", $"zzim_click_cnt" * $"count").agg(sum("sum")).show
+res3507: Long = 866
++--------------+-----+
+|zzim_click_cnt|count|
++--------------+-----+
+|             1|  752|
+|             3|    6|
+|             4|    1|
+|             2|   46|
++--------------+-----+
+
++--------+
+|sum(sum)|
++--------+
+|     866|
++--------+
+
+
+//상품별방문요약(일별)(ProductVisitSummary)
+val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22")
+val pvs = spark.read.parquet("/user/ecube/log-planet/batch/out/ProductVisitSummary/dt=2018-08-22")
+
+// record count
+base.groupBy("productCd","productCatgL","productCatgM","productCatgS").count.count
+pvs.count
+res4317: Long = 240
+res4318: Long = 240
+
+// sampling
++----------+--------------+--------------+--------------+------------------------+--------------------------+----------------+--------------+
+|product_cd|product_catg_l|product_catg_m|product_catg_s|prod_detail_pageview_cnt|prod_detail_page_stay_time|basket_click_cnt|zzim_click_cnt|
++----------+--------------+--------------+--------------+------------------------+--------------------------+----------------+--------------+
+|       328|             4|            12|              |                     537|                  31800198|              26|             4|
++----------+--------------+--------------+--------------+------------------------+--------------------------+----------------+--------------+
+//prod_detail_pageview_cnt
+base.filter(($"productCd"==="328")&&($"productCatgL"==="4")&&($"productCatgM"==="12")).count
+res4588: Long = 537
+
+//prod_detail_page_stay_time
+base.filter(($"productCd"==="328")&&($"productCatgL"==="4")&&($"productCatgM"==="12")).agg(sum("stayTime")).show
++-------------+
+|sum(stayTime)|
++-------------+
+|     35900190|
++-------------+
+
+//basket_click_cnt
+base.filter(($"productCd"==="328")&&($"productCatgL"==="4")&&($"productCatgM"==="12")).filter($"eventTypeCd"==="31").count
+res4721: Long = 26
+
+//zzim_click_cnt
+base.filter(($"productCd"==="328")&&($"productCatgL"==="4")&&($"productCatgM"==="12")).filter($"eventTypeCd"==="32").count
+res4753: Long = 4
+
+
+// 시간대 별 방문요약(HourVisitSummary)
+val base = spark.read.parquet("/user/ecube/log-planet/batch/out/LogDetail/dt=2018-08-22")
+val hvs = spark.read.parquet("/user/ecube/log-planet/batch/out/HourVisitSummary/dt=2018-08-22")
+
+hvs.sort(asc("base_hr")).show
++----------+-------+---------+------------+---------+
+|   base_dt|base_hr|dayofweek|pageview_cnt|visit_cnt|
++----------+-------+---------+------------+---------+
+|2018-08-22|     15|        수|        2060|       78|
+|2018-08-22|     16|        수|       74221|     4830|
+|2018-08-22|     17|        수|      129081|     2328|
+|2018-08-22|     18|        수|       38525|      658|
++----------+-------+---------+------------+---------+
+// pageview_cnt
+base.filter($"eventTimestamp".startsWith("2018082215")).count
+res5193: Long = 2060
+//visit_cnt
+base.filter($"eventTimestamp".startsWith("2018082215")).groupBy("sessionId").count.count
+res5202: Long = 78
+
+
+//컨텐츠별주문요약 (일별, 주별, 월별)(ContentOrderSummaryDaily)
+val order = spark.read.parquet("/user/ecube/log-planet/ECRM_LOG-DE1533286081-ENT8441-HDFS/dt=2018-08-22")
+val cos = spark.read.parquet("/user/ecube/log-planet/batch/out/ContentOrderSummaryDaily/dt=2018-08-22")
+
+// record count
+order.groupBy("product_cd").count.count
+cos.count
+res5222: Long = 211
+res5223: Long = 211
+
+cos.select("product_cd","product_catg_l","product_catg_m","product_catg_s","order_visit_cnt").sort(desc("order_visit_cnt")).show(5)
++----------+--------------+--------------+--------------+---------------+
+|product_cd|product_catg_l|product_catg_m|product_catg_s|order_visit_cnt|
++----------+--------------+--------------+--------------+---------------+
+|       329|             2|             4|            12|             22|
+|       326|             2|             4|            12|             21|
+|       325|             2|             4|            12|             19|
+|       328|             2|             4|            12|             18|
+|       327|             2|             4|            12|             16|
++----------+--------------+--------------+--------------+---------------+
+cos.select("product_cd","product_catg_l","product_catg_m","product_catg_s","order_visit_cnt")
+    .sort(desc("order_visit_cnt"))
+    .head(5).map(row => row.get(0)).toList.foreach(pcd => {
+        val cnt = order.filter(($"product_cd"===pcd)).select("session_id","product_cd").groupBy("session_id").count.count
+        println(f"product cd: $pcd%s, visit count: $cnt%d")
+    })
+product cd: 329, visit count: 22
+product cd: 326, visit count: 21
+product cd: 325, visit count: 19
+product cd: 328, visit count: 18
+product cd: 327, visit count: 16
+
+
+//고객별상품별주문집계(일별)(ProductOrderSummaryDaily)
+
+
+
+//상품별주문요약(일별)(ProductOrderSummaryDaily)
+val order = spark.read.parquet("/user/ecube/log-planet/ECRM_LOG-DE1533286081-ENT8441-HDFS/dt=2018-08-22")
+val pos = spark.read.parquet("/user/ecube/log-planet/batch/out/ProductOrderSummaryDaily/dt=2018-08-22")
+
+// record count
+order.groupBy("product_cd").count.count
+pos.count
+res5634: Long = 211
+res5635: Long = 211
+
+// sampling
+pos.select("product_cd","order_cnt","amount").sort(desc("order_cnt")).show(5)
++----------+---------+--------+
+|product_cd|order_cnt|  amount|
++----------+---------+--------+
+|       329|       36|23765000|
+|       326|       24|18620000|
+|       328|       21|16905000|
+|       325|       21|13965000|
+|       338|       20|13195000|
++----------+---------+--------+
+pos.select("product_cd","order_cnt","amount").sort(desc("order_cnt")).head(5).map(row => row.get(0)).toList.foreach(p => {
+    val count = order.filter($"product_cd"===p).count
+    val amount = order.filter($"product_cd"===p).agg(sum($"product_qty" * $"product_unit_price")).head.getLong(0)
+    println(f"product cd: $p%s, order count: $count%d, amount: $amount%d")
+})
+product cd: 329, order count: 36, amount: 23765000
+product cd: 326, order count: 24, amount: 18620000
+product cd: 325, order count: 21, amount: 13965000
+product cd: 328, order count: 21, amount: 16905000
+product cd: 338, order count: 20, amount: 13195000
+
